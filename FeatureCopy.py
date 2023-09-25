@@ -11,6 +11,7 @@ import nltk
 
 import ssl
 from LoadData import read_json_objs
+import torch
 
 try:
     _create_unverified_https_context = ssl._create_unverified_context
@@ -23,33 +24,6 @@ nltk.download('cmudict')
 nltk.download('stopwords')
 
 cmuDictionary = None
-
-
-# takes a paragraph of text and divides it into chunks of specified number of sentences
-def slidingWindow(sequence, winSize, step=1):
-    try:
-        it = iter(sequence)
-    except TypeError:
-        raise Exception("**ERROR** sequence must be iterable.")
-    if not ((type(winSize) == type(0)) and (type(step) == type(0))):
-        raise Exception("**ERROR** type(winSize) and type(step) must be int.")
-    if step > winSize:
-        raise Exception("**ERROR** step must not be larger than winSize.")
-    if winSize > len(sequence):
-        raise Exception("**ERROR** winSize must not be larger than sequence length.")
-
-    sequence = sent_tokenize(sequence)
-
-    # Pre-compute number of chunks to omit
-    numOfChunks = int(((len(sequence) - winSize) / step) + 1)
-
-    l = []
-    # Do the work
-    for i in range(0, numOfChunks * step, step):
-        l.append(" ".join(sequence[i:i + winSize]))
-
-    return l
-
 
 # ---------------------------------------------------------------------
 
@@ -129,7 +103,7 @@ def Avg_Syllable_per_Word(text):
 
 # -----------------------------------------------------------------------------
 
-# COUNTS SPECIAL CHARACTERS NORMALIZED OVER LENGTH OF CHUNK
+# COUNTS SPECIAL CHARACTERS NORMALIZED OVER LENGTH OF text
 def CountSpecialCharacter(text):
     st = ["#", "$", "%", "&", "(", ")", "*", "+", "-", "/", "<", "=", '>',
           "@", "[", "\\", "]", "^", "_", '`', "{", "|", "}", '~', '\t', '\n']
@@ -380,90 +354,81 @@ def GunningFoxIndex(text, NoOfSentences):
     return G
 
 
-def PrepareData(text1, text2, Winsize):
-    chunks1 = slidingWindow(text1, Winsize, Winsize)
-    chunks2 = slidingWindow(text2, Winsize, Winsize)
-    return " ".join(str(chunk1) + str(chunk2) for chunk1, chunk2 in zip(chunks1, chunks2))
-
-
 # ------------------------------------------------------------------
 
 # returns a feature vector of text
-def FeatureExtration(text, winSize, step):
+def FeatureExtration(text):
     # cmu dictionary for syllables
     global cmuDictionary
     cmuDictionary = cmudict.dict()
 
-    chunks = slidingWindow(text, winSize, step)
-    vector = []
-    for chunk in chunks:
-        feature = []
+    winSize = len(sent_tokenize(text))
 
-        # LEXICAL FEATURES
-        meanwl = (Avg_wordLength(chunk))
-        feature.append(meanwl)
+    feature = []
 
-        meansl = (Avg_SentLenghtByCh(chunk))
-        feature.append(meansl)
+    # LEXICAL FEATURES
+    meanwl = (Avg_wordLength(text))
+    feature.append(meanwl)
 
-        mean = (Avg_SentLenghtByWord(chunk))
-        feature.append(mean)
+    meansl = (Avg_SentLenghtByCh(text))
+    feature.append(meansl)
 
-        meanSyllable = Avg_Syllable_per_Word(chunk)
-        feature.append(meanSyllable)
+    mean = (Avg_SentLenghtByWord(text))
+    feature.append(mean)
 
-        means = CountSpecialCharacter(chunk)
-        feature.append(means)
+    meanSyllable = Avg_Syllable_per_Word(text)
+    feature.append(meanSyllable)
 
-        p = CountPuncuation(chunk)
-        feature.append(p)
+    means = CountSpecialCharacter(text)
+    feature.append(means)
 
-        f = CountFunctionalWords(text)
-        feature.append(f)
+    p = CountPuncuation(text)
+    feature.append(p)
 
-        # VOCABULARY RICHNESS FEATURES
+    f = CountFunctionalWords(text)
+    feature.append(f)
 
-        TTratio = typeTokenRatio(chunk)
-        feature.append(TTratio)
+    # VOCABULARY RICHNESS FEATURES
 
-        HonoreMeasureR, hapax = hapaxLegemena(chunk)
-        feature.append(hapax)
-        feature.append(HonoreMeasureR)
+    TTratio = typeTokenRatio(text)
+    feature.append(TTratio)
 
-        SichelesMeasureS, dihapax = hapaxDisLegemena(chunk)
-        feature.append(dihapax)
-        feature.append(SichelesMeasureS)
+    HonoreMeasureR, hapax = hapaxLegemena(text)
+    feature.append(hapax)
+    feature.append(HonoreMeasureR)
 
-        YuleK = YulesCharacteristicK(chunk)
-        feature.append(YuleK)
+    SichelesMeasureS, dihapax = hapaxDisLegemena(text)
+    feature.append(dihapax)
+    feature.append(SichelesMeasureS)
 
-        S = SimpsonsIndex(chunk)
-        feature.append(S)
+    YuleK = YulesCharacteristicK(text)
+    feature.append(YuleK)
 
-        B = BrunetsMeasureW(chunk)
-        feature.append(B)
+    S = SimpsonsIndex(text)
+    feature.append(S)
 
-        Shannon = ShannonEntropy(text)
-        feature.append(Shannon)
+    B = BrunetsMeasureW(text)
+    feature.append(B)
 
-        # READIBILTY FEATURES
-        FR = FleschReadingEase(chunk, winSize)
-        feature.append(FR)
+    Shannon = ShannonEntropy(text)
+    feature.append(Shannon)
 
-        FC = FleschCincadeGradeLevel(chunk, winSize)
-        feature.append(FC)
+    # READIBILTY FEATURES
+    FR = FleschReadingEase(text, winSize)
+    feature.append(FR)
 
-        # also quite a different
-        D = dale_chall_readability_formula(chunk, winSize)
-        feature.append(D)
+    FC = FleschCincadeGradeLevel(text, winSize)
+    feature.append(FC)
 
-        # quite a difference
-        G = GunningFoxIndex(chunk, winSize)
-        feature.append(G)
+    # also quite a different
+    D = dale_chall_readability_formula(text, winSize)
+    feature.append(D)
 
-        vector.append(feature)
+    # quite a difference
+    G = GunningFoxIndex(text, winSize)
+    feature.append(G)
 
-    return vector
+    return torch.tensor(feature) / torch.norm(torch.tensor(feature))
 
 
 if __name__ == '__main__':
@@ -472,10 +437,12 @@ if __name__ == '__main__':
     human = [train_obj for train_obj in train_objs if train_obj['label'] == 1]
     machine = [train_obj for train_obj in train_objs if train_obj['label'] == 0]
 
-    vector = FeatureExtration(human[0]['text'], winSize=1, step=1)
-    print(np.array(vector[0]) / np.linalg.norm(np.array(vector[0])))
-    vector = FeatureExtration(human[1]['text'], winSize=1, step=1)
-    print(vector[0])
-    vector1 = FeatureExtration(machine[0]['text'], winSize=1, step=1)
-    print(vector1[0])
+    vector = FeatureExtration(machine[1]['text'])
+    print(vector.shape)
+    # print(machine[1]['text'])
+    # print(torch.flatten(vector) / torch.norm(torch.flatten(vector)))
+    # vector = FeatureExtration(human[1]['text'], winSize=1, step=1)
+    # print(vector)
+    # vector1 = FeatureExtration(machine[0]['text'], winSize=1, step=1)
+    # print(vector1)
 
