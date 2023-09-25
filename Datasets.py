@@ -36,10 +36,9 @@ class TrainSet(Dataset):
 
 
 class ValidationSet(Dataset):
-    def __init__(self, objs, out_objs, tokenizer, maxlen):
+    def __init__(self, objs, tokenizer, maxlen):
         self.data = objs
         self.tokenizer = tokenizer
-        self.out = out_objs
         self.maxlen = maxlen
 
     def __len__(self):

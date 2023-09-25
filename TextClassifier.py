@@ -16,7 +16,7 @@ class TextClassifier(nn.Module):
         else:
             self.cls_layer = nn.Linear(788, 1) if 'base' in args.model else nn.Linear(1044, 1)
 
-    def forward(self, input_ids, attn_masks, token_type_ids):
+    def forward(self, text, input_ids, attn_masks, token_type_ids):
         '''
         Inputs:
             -seq : Tensor of shape [B, T] containing token ids of sequences
@@ -33,7 +33,5 @@ class TextClassifier(nn.Module):
         if args.feature is None:
             #Feeding cls_rep to the classifier layer
             logits = self.cls_layer(cls_rep)
-        else:
-            
         
         return logits

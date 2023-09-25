@@ -42,7 +42,7 @@ elif args.model == 'deberta_large':
 else:
     raise Exception('Invalid model')
 
-path = args.data
+path = args.datapath
 train_objs, val_objs = read_json_objs(path + 'training.json'), read_json_objs(path + 'validation_data.json')
 
 print("Creating the classifier, initialised with pretrained parameters...")
@@ -55,7 +55,7 @@ opti = optim.AdamW(net.parameters(), lr = 2e-5)
 
 #Creating instances of training and development dataloaders
 train_data = TrainSet(train_objs, tokenizer, 100)
-val_data = ValidationSet(val_objs, valout_objs, tokenizer, 100)
+val_data = ValidationSet(val_objs, tokenizer, 100)
 
 train_loader = DataLoader(train_data, batch_size = 64)
 dev_loader = DataLoader(val_data, batch_size = 64)
