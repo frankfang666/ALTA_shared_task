@@ -1,0 +1,1 @@
+print(puncuation_count(train_objs[0]['text']))
