@@ -20,6 +20,7 @@ except AttributeError:
 else:
     ssl._create_default_https_context = _create_unverified_https_context
 
+nltk.download('punkt')
 nltk.download('cmudict')
 nltk.download('stopwords')
 
@@ -439,10 +440,3 @@ if __name__ == '__main__':
 
     vector = FeatureExtration(machine[1]['text'])
     print(vector.shape)
-    # print(machine[1]['text'])
-    # print(torch.flatten(vector) / torch.norm(torch.flatten(vector)))
-    # vector = FeatureExtration(human[1]['text'], winSize=1, step=1)
-    # print(vector)
-    # vector1 = FeatureExtration(machine[0]['text'], winSize=1, step=1)
-    # print(vector1)
-

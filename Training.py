@@ -66,5 +66,8 @@ print("Done preprocessing training and development data.")
 num_epoch = 5
 
 if __name__ == '__main__':
-    train(net, device, criterion, opti, train_loader, num_epoch)
-    create_output_file(predict(net, dev_loader, device))
+    if args.load is None:
+        train(net, device, criterion, opti, train_loader, num_epoch)
+        create_output_file(predict(net, dev_loader, device))
+    else:
+        create_output_file(predict(torch.load(args.load), dev_loader, device))

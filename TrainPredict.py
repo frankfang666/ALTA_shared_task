@@ -76,7 +76,6 @@ def predict(net, dataloader, device):
             predictions += torch.flatten(soft_probs).tolist()
     return predictions
 
-
 def create_output_file(predictions):
   with open('./answer.json', 'w+') as f:
     for i in range(len(predictions)):
