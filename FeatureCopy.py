@@ -429,7 +429,7 @@ def FeatureExtration(text):
     G = GunningFoxIndex(text, winSize)
     feature.append(G)
 
-    return torch.tensor(feature) / torch.norm(torch.tensor(feature))
+    return torch.tensor(feature, dtype=torch.long) / torch.norm(torch.tensor(feature))
 
 
 if __name__ == '__main__':

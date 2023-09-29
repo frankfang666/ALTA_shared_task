@@ -43,7 +43,7 @@ else:
     raise Exception('Invalid model')
 
 path = args.datapath
-train_objs, val_objs = read_json_objs(path + 'training.json'), read_json_objs(path + 'validation_data.json')
+train_objs, val_objs, test_objs = read_json_objs(path + 'training.json'), read_json_objs(path + 'validation_data.json'), read_json_objs(path + 'test_data.json')
 
 print("Creating the classifier, initialised with pretrained parameters...")
 net = TextClassifier(model)
@@ -56,9 +56,11 @@ opti = optim.AdamW(net.parameters(), lr = 2e-5)
 #Creating instances of training and development dataloaders
 train_data = TrainSet(train_objs, tokenizer, 100)
 val_data = ValidationSet(val_objs, tokenizer, 100)
+test_data = ValidationSet(test_objs, tokenizer, 100)
 
 train_loader = DataLoader(train_data, batch_size = 64)
 dev_loader = DataLoader(val_data, batch_size = 64)
+test_loader = DataLoader(test_data, batch_size = 64)
 
 print("Done preprocessing training and development data.")
 
@@ -70,4 +72,4 @@ if __name__ == '__main__':
         train(net, device, criterion, opti, train_loader, num_epoch)
         create_output_file(predict(net, dev_loader, device))
     else:
-        create_output_file(predict(torch.load(args.load), dev_loader, device))
+        create_output_file(predict(torch.load(args.load), test_loader, device))
