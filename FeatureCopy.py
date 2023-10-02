@@ -160,13 +160,8 @@ def CountFunctionalWords(text):
 
     functional_words = functional_words.split()
     words = RemoveSpecialCHs(text)
-    count = 0
 
-    for i in text:
-        if i in functional_words:
-            count += 1
-
-    return count / len(words)
+    return len([i for i in text if i in functional_words]) / len(words)
 
 
 # ---------------------------------------------------------------------------

@@ -10,10 +10,7 @@ class TextClassifier(nn.Module):
         self.pretrained_layer = model
 
         #Classification layer
-        if args.feature is None:
-            self.cls_layer = nn.Linear(768, 1) if 'base' in args.model else nn.Linear(1024, 1)
-        else:
-            self.cls_layer = nn.Linear(788, 1) if 'base' in args.model else nn.Linear(1044, 1)
+        self.cls_layer = nn.Linear(768, 1) if 'base' in args.model else nn.Linear(1024, 1)
 
     def forward(self, input_ids, attn_masks, token_type_ids, features=None):
         '''
@@ -29,10 +26,7 @@ class TextClassifier(nn.Module):
         #Obtaining the representation of [CLS] head (the first token)
         cls_rep = cont_reps[:, 0]
 
-        if features is None:
-            #Feeding cls_rep to the classifier layer
-            logits = self.cls_layer(cls_rep)
-        else:
-            rep = torch.concat((cls_rep, features), dim=1)
-            logits = self.cls_layer(rep)
+        #Feeding cls_rep to the classifier layer
+        logits = self.cls_layer(cls_rep)
+
         return logits

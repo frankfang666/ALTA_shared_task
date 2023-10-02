@@ -63,6 +63,7 @@ dev_loader = DataLoader(val_data, batch_size = 64)
 test_loader = DataLoader(test_data, batch_size = 64)
 
 print("Done preprocessing training and development data.")
+print(train_data[5])
 
 #fine-tune the model
 num_epoch = 5
@@ -70,6 +71,9 @@ num_epoch = 5
 if __name__ == '__main__':
     if args.load is None:
         train(net, device, criterion, opti, train_loader, num_epoch)
-        create_output_file(predict(net, dev_loader, device))
+        if args.features is None:
+            create_output_file(predict(net, dev_loader, device))
+        else:
+            embeddings = net()
     else:
         create_output_file(predict(torch.load(args.load), test_loader, device))

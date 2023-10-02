@@ -32,13 +32,7 @@ class TrainSet(Dataset):
             'attn_masks': torch.tensor(attn_masks, dtype=torch.long),
             'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
             'targets': torch.tensor(label, dtype=torch.float)
-        } if args.feature is None else {
-            'input_ids': torch.tensor(input_ids, dtype=torch.long),
-            'attn_masks': torch.tensor(attn_masks, dtype=torch.long),
-            'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
-            'targets': torch.tensor(label, dtype=torch.float),
-            'features': FeatureExtration(text)
-        }
+        } 
 
 
 class ValidationSet(Dataset):
@@ -69,10 +63,4 @@ class ValidationSet(Dataset):
             'input_ids': torch.tensor(input_ids, dtype=torch.long),
             'attn_masks': torch.tensor(attn_masks, dtype=torch.long),
             'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long)
-        } if args.feature is None else {
-            'input_ids': torch.tensor(input_ids, dtype=torch.long),
-            'attn_masks': torch.tensor(attn_masks, dtype=torch.long),
-            'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
-            'features': FeatureExtration(text)
-        }
-
+        } 
