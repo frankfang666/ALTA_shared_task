@@ -1,7 +1,28 @@
-import json
-import time
 import torch
+import torch.nn as nn
 from Arguments import args
+import time
+
+class FeatureClassifier(nn.Module):
+
+    def __init__(self):
+        super(TextClassifier, self).__init__()
+
+        #Classification layer
+        self.cls_layer = nn.Linear(20, 1)
+
+    def forward(self, features):
+        '''
+        Inputs:
+            -seq : Tensor of shape [B, T] containing token ids of sequences
+            -attn_masks : Tensor of shape [B, T] containing attention masks to be used to avoid contibution of PAD tokens
+        '''
+
+        #Feeding the input to BERT model to obtain contextualized representations
+        logits = self.cls_layer(features)
+
+        return logits
+
 
 def get_accuracy_from_logits(logits, labels):
     probs = torch.sigmoid(logits.unsqueeze(-1))
@@ -10,7 +31,7 @@ def get_accuracy_from_logits(logits, labels):
     return acc
 
 
-def evaluate(net, device, criterion, dataloader):
+def evaluate_features(net, device, criterion, dataloader):
     net.eval()
 
     mean_acc, mean_loss = 0, 0
@@ -18,8 +39,8 @@ def evaluate(net, device, criterion, dataloader):
 
     with torch.no_grad():
         for data in dataloader:
-            input_ids, attn_masks, token_type_ids, labels = data['input_ids'].to(device), data['attn_masks'].to(device), data['token_type_ids'].to(device), data['targets'].to(device)
-            logits = net(input_ids, attn_masks, token_type_ids)
+            features = data['features'].to(device)
+            logits = net(features)
             mean_loss += criterion(logits.squeeze(-1), labels.float()).item()
             mean_acc += get_accuracy_from_logits(logits, labels)
             count += 1
@@ -27,7 +48,7 @@ def evaluate(net, device, criterion, dataloader):
     return mean_acc / count, mean_loss / count
 
 
-def train(net, device, criterion, opti, train_loader, max_eps):
+def train_features(net, device, criterion, opti, train_loader, max_eps):
 
     best_f1 = 0
     st = time.time()
@@ -40,10 +61,10 @@ def train(net, device, criterion, opti, train_loader, max_eps):
             #Clear gradients
             opti.zero_grad()
 
-            input_ids, attn_masks, token_type_ids, labels = data['input_ids'].to(device, dtype = torch.long), data['attn_masks'].to(device, dtype = torch.long), data['token_type_ids'].to(device, dtype = torch.long), data['targets'].to(device, dtype = torch.long)
+            features = data['features'].to(device)
             
             #Obtaining the logits from the model
-            logits = net(input_ids, attn_masks, token_type_ids)
+            logits = net(features)
 
             #Computing loss
             loss = criterion(logits.squeeze(-1), labels.float())
@@ -62,22 +83,17 @@ def train(net, device, criterion, opti, train_loader, max_eps):
     torch.save(net, './sstcls.pt')
 
 
-def predict(net, dataloader, device):
+def predict_features(net, dataloader, device):
     net.eval()
 
     predictions = []
 
     with torch.no_grad():
         for data in dataloader:
-            input_ids, attn_masks, token_type_ids = data['input_ids'].to(device), data['attn_masks'].to(device), data['token_type_ids'].to(device)
-            logits = net(input_ids, attn_masks, token_type_ids)
+            features = data['features'].to(device)
+            logits = net(features)
             probs = torch.sigmoid(logits.unsqueeze(-1))
             soft_probs = (probs > 0.5).long()
             soft_probs.squeeze()
             predictions += torch.flatten(soft_probs).tolist()
     return predictions
-
-def create_output_file(predictions):
-  with open('./answer.json', 'w+') as f:
-    for i in range(len(predictions)):
-      f.write(json.dumps({'id': i, 'label': predictions[i]})+'\n')
