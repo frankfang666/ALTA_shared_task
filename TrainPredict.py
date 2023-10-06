@@ -19,7 +19,11 @@ def evaluate(net, device, criterion, dataloader):
     with torch.no_grad():
         for data in dataloader:
             input_ids, attn_masks, token_type_ids, labels = data['input_ids'].to(device), data['attn_masks'].to(device), data['token_type_ids'].to(device), data['targets'].to(device)
-            logits = net(input_ids, attn_masks, token_type_ids)
+            if args.feature == 'concat':
+                features = data['features'].to(device)
+                logits = net(input_ids, attn_masks, token_type_ids, features)[0]
+            else:
+                logits = net(input_ids, attn_masks, token_type_ids)[0]
             mean_loss += criterion(logits.squeeze(-1), labels.float()).item()
             mean_acc += get_accuracy_from_logits(logits, labels)
             count += 1
@@ -43,7 +47,11 @@ def train(net, device, criterion, opti, train_loader, max_eps):
             input_ids, attn_masks, token_type_ids, labels = data['input_ids'].to(device, dtype = torch.long), data['attn_masks'].to(device, dtype = torch.long), data['token_type_ids'].to(device, dtype = torch.long), data['targets'].to(device, dtype = torch.long)
             
             #Obtaining the logits from the model
-            logits = net(input_ids, attn_masks, token_type_ids)
+            if args.feature == 'concat':
+                features = data['features'].to(device)
+                logits = net(input_ids, attn_masks, token_type_ids, features)[0]
+            else:
+                logits = net(input_ids, attn_masks, token_type_ids)[0]
 
             #Computing loss
             loss = criterion(logits.squeeze(-1), labels.float())
@@ -70,7 +78,11 @@ def predict(net, dataloader, device):
     with torch.no_grad():
         for data in dataloader:
             input_ids, attn_masks, token_type_ids = data['input_ids'].to(device), data['attn_masks'].to(device), data['token_type_ids'].to(device)
-            logits = net(input_ids, attn_masks, token_type_ids)
+            if args.feature == 'concat':
+                features = data['features'].to(device)
+                logits = net(input_ids, attn_masks, token_type_ids, features)[0]
+            else:
+                logits = net(input_ids, attn_masks, token_type_ids)[0]
             probs = torch.sigmoid(logits.unsqueeze(-1))
             soft_probs = (probs > 0.5).long()
             soft_probs.squeeze()

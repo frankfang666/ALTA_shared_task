@@ -224,7 +224,6 @@ def typeTokenRatio(text):
 
 
 # --------------------------------------------------------------------------
-# logW = V-a/log(N)
 # N = total words , V = vocabulary richness (unique words) ,  a=0.17
 # we can convert into log because we are only comparing different texts
 def BrunetsMeasureW(text):
@@ -232,7 +231,7 @@ def BrunetsMeasureW(text):
     a = 0.17
     V = float(len(set(words)))
     N = len(words)
-    B = (V - a) / (math.log(N))
+    B = (V ** -a) * math.log(N)
     return B
 
 
@@ -290,7 +289,10 @@ def SimpsonsIndex(text):
     freqs.update(words)
     N = len(words)
     n = sum([1.0 * i * (i - 1) for i in freqs.values()])
-    D = 1 - (n / (N * (N - 1)))
+    try:
+        D = 1 - (n / (N * (N - 1)))
+    except ZeroDivisionError:
+        D = 1
     return D
 
 
@@ -424,7 +426,9 @@ def FeatureExtration(text):
     G = GunningFoxIndex(text, winSize)
     feature.append(G)
 
-    return torch.tensor(feature, dtype=torch.long) / torch.norm(torch.tensor(feature))
+    # result = torch.tensor(feature) / torch.norm(torch.tensor(feature))
+    result = torch.tensor(feature)
+    return result.long()
 
 
 if __name__ == '__main__':

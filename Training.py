@@ -11,8 +11,7 @@ from torch.utils.data import DataLoader
 
 from TrainPredict import train, create_output_file, predict
 from Arguments import args
-
-from FeatureClassifierTorch import *
+from FeatureClassifier import * 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
@@ -64,9 +63,10 @@ if __name__ == '__main__':
         neural_model = net
     else:
         neural_model = torch.load(args.load)
-    if args.feature is None:
+    if args.feature != 'ensemble':
         create_output_file(predict(neural_model, dev_loader, device))
     else:
-        feature_model = FeatureClassifier()
-        feature_model.to(device)
-        train_features(feature_model, device, criterion, opti, train_loader, num_epoch)
+        training_features, training_targets = concat_features(neural_model, train_data, True, device)
+        test_features = concat_features(neural_model, train_data, False, device)
+        result_model = train_features(training_features, training_targets)
+        create_output_file(result_model.predict(test_features))
