@@ -4,6 +4,7 @@ import torch.optim as optim
 from transformers import AutoModel
 from transformers import AutoTokenizer
 from transformers import RobertaTokenizer, RobertaModel
+from transformers import BertTokenizer, BertModel
 from Datasets import TrainSet, ValidationSet
 from LoadData import read_json_objs
 from TextClassifier import TextClassifier
@@ -11,12 +12,18 @@ from torch.utils.data import DataLoader
 
 from TrainPredict import train, create_output_file, predict
 from Arguments import args
-from FeatureClassifier import * 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
 
-if args.model == 'roberta_base':
+
+if args.model == 'bert_base':
+    model = BertModel.from_pretrained('bert-base-cased')
+    tokenizer =  BertTokenizer.from_pretrained('bert-base-cased')
+elif args.model == 'bert_large':
+    model = BertModel.from_pretrained('bert-large-cased')
+    tokenizer =  BertTokenizer.from_pretrained('bert-large-cased')
+elif args.model == 'roberta_base':
     model = RobertaModel.from_pretrained('roberta-base')
     tokenizer = RobertaTokenizer.from_pretrained('roberta-base', truncation=True, do_lower_case=True)
 elif args.model == 'roberta_large':
@@ -43,18 +50,18 @@ criterion = nn.BCEWithLogitsLoss()
 opti = optim.AdamW(net.parameters(), lr = 2e-5)
 
 #Creating instances of training and development dataloaders
-train_data = TrainSet(train_objs, tokenizer, 100)
-val_data = ValidationSet(val_objs, tokenizer, 100)
-test_data = ValidationSet(test_objs, tokenizer, 100)
+train_data = TrainSet(train_objs, tokenizer, args.maxlen)
+val_data = ValidationSet(val_objs, tokenizer, args.maxlen)
+test_data = ValidationSet(test_objs, tokenizer, args.maxlen)
 
-train_loader = DataLoader(train_data, batch_size = 64)
-dev_loader = DataLoader(val_data, batch_size = 64)
-test_loader = DataLoader(test_data, batch_size = 64)
+train_loader = DataLoader(train_data, batch_size = args.batchsize)
+dev_loader = DataLoader(val_data, batch_size = args.batchsize)
+test_loader = DataLoader(test_data, batch_size = args.batchsize)
 
 print("Done preprocessing training and development data.")
 
 #fine-tune the model
-num_epoch = 5
+num_epoch = args.epochs
 
 if __name__ == '__main__':
     neural_model = None
@@ -63,10 +70,4 @@ if __name__ == '__main__':
         neural_model = net
     else:
         neural_model = torch.load(args.load)
-    if args.feature != 'ensemble':
-        create_output_file(predict(neural_model, dev_loader, device))
-    else:
-        training_features, training_targets = concat_features(neural_model, train_data, True, device)
-        test_features = concat_features(neural_model, train_data, False, device)
-        result_model = train_features(training_features, training_targets)
-        create_output_file(result_model.predict(test_features))
+    create_output_file(predict(neural_model, test_loader, device))

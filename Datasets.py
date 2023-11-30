@@ -1,6 +1,5 @@
 import torch
 from torch.utils.data import Dataset
-from FeatureCopy import FeatureExtration
 from Arguments import args
 
 class TrainSet(Dataset):
@@ -28,12 +27,6 @@ class TrainSet(Dataset):
         token_type_ids = inputs['token_type_ids']
 
         return {
-            'features': FeatureExtration(text), 
-            'input_ids': torch.tensor(input_ids, dtype=torch.long),
-            'attn_masks': torch.tensor(attn_masks, dtype=torch.long),
-            'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
-            'targets': torch.tensor(label, dtype=torch.float)
-        } if args.feature == 'concat' else {
             'input_ids': torch.tensor(input_ids, dtype=torch.long),
             'attn_masks': torch.tensor(attn_masks, dtype=torch.long),
             'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long),
@@ -66,11 +59,6 @@ class ValidationSet(Dataset):
         token_type_ids = inputs['token_type_ids']
 
         return {
-            'features': FeatureExtration(text), 
-            'input_ids': torch.tensor(input_ids, dtype=torch.long),
-            'attn_masks': torch.tensor(attn_masks, dtype=torch.long),
-            'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long)
-        } if args.feature == 'concat' else {
             'input_ids': torch.tensor(input_ids, dtype=torch.long),
             'attn_masks': torch.tensor(attn_masks, dtype=torch.long),
             'token_type_ids': torch.tensor(token_type_ids, dtype=torch.long)

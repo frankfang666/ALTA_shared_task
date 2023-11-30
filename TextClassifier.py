@@ -10,10 +10,7 @@ class TextClassifier(nn.Module):
         self.pretrained_layer = model
 
         #Classification layer
-        if args.feature != 'concat':
-            self.cls_layer = nn.Linear(768, 1) if 'base' in args.model else nn.Linear(1024, 1)
-        else:
-            self.cls_layer = nn.Linear(788, 1) if 'base' in args.model else nn.Linear(1044, 1)
+        self.cls_layer = nn.Linear(768, 1) if 'base' in args.model else nn.Linear(1024, 1)
 
     def forward(self, input_ids, attn_masks, token_type_ids, features=None):
         '''
@@ -30,10 +27,6 @@ class TextClassifier(nn.Module):
         cls_rep = cont_reps[:, 0]
 
         #Feeding cls_rep to the classifier layer
-        if args.features != 'concat':
-            logits = self.cls_layer(cls_rep)
-        else:
-            cat_rep = torch.cat((cls_rep, features), dim=1)
-            logits = self.cls_layer(cat_rep)
+        logits = self.cls_layer(cls_rep)
 
         return logits, cls_rep
