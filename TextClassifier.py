@@ -6,11 +6,8 @@ class TextClassifier(nn.Module):
 
     def __init__(self, model):
         super(TextClassifier, self).__init__()
-        #Instantiating BERT model object
-        self.pretrained_layer = model
-
-        #Classification layer
-        self.cls_layer = nn.Linear(768, 1) if 'base' in args.model else nn.Linear(1024, 1)
+        self.pretrained_layer = model  # pre-trained language model object
+        self.cls_layer = nn.Linear(768, 1) if 'base' in args.model else nn.Linear(1024, 1)  # Classification layer
 
     def forward(self, input_ids, attn_masks, token_type_ids, features=None):
         '''
@@ -19,14 +16,14 @@ class TextClassifier(nn.Module):
             -attn_masks : Tensor of shape [B, T] containing attention masks to be used to avoid contibution of PAD tokens
         '''
 
-        #Feeding the input to BERT model to obtain contextualized representations
+        # Feeding the input to PLM to obtain contextualized representations
         outputs = self.pretrained_layer(input_ids=input_ids, attention_mask = attn_masks, token_type_ids=token_type_ids, return_dict=True)
-        cont_reps = outputs.last_hidden_state
 
-        #Obtaining the representation of [CLS] head (the first token)
+        # # Obtaining the last hidden state of the [CLS] token
+        cont_reps = outputs.last_hidden_state
         cls_rep = cont_reps[:, 0]
 
-        #Feeding cls_rep to the classifier layer
+        # Feeding cls_rep to the classifier layer
         logits = self.cls_layer(cls_rep)
 
         return logits, cls_rep

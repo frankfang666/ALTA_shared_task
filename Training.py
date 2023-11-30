@@ -17,6 +17,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print(device)
 
 
+# select model
 if args.model == 'bert_base':
     model = BertModel.from_pretrained('bert-base-cased')
     tokenizer =  BertTokenizer.from_pretrained('bert-base-cased')
@@ -38,6 +39,7 @@ elif args.model == 'deberta_large':
 else:
     raise Exception('Invalid model')
 
+# specify data files
 path = args.datapath
 train_objs, val_objs, test_objs = read_json_objs(path + 'training.json'), read_json_objs(path + 'validation_data.json'), read_json_objs(path + 'test_data.json')
 
@@ -60,10 +62,11 @@ test_loader = DataLoader(test_data, batch_size = args.batchsize)
 
 print("Done preprocessing training and development data.")
 
-#fine-tune the model
 num_epoch = args.epochs
 
 if __name__ == '__main__':
+
+    # fine-tune the model
     neural_model = None
     if args.load is None:
         train(net, device, criterion, opti, train_loader, num_epoch)

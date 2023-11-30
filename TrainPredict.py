@@ -37,21 +37,11 @@ def train(net, device, criterion, opti, train_loader, max_eps):
 
         for it, data in enumerate(train_loader):
 
-            #Clear gradients
             opti.zero_grad()
-
             input_ids, attn_masks, token_type_ids, labels = data['input_ids'].to(device, dtype = torch.long), data['attn_masks'].to(device, dtype = torch.long), data['token_type_ids'].to(device, dtype = torch.long), data['targets'].to(device, dtype = torch.long)
-            
-            #Obtaining the logits from the model
             logits = net(input_ids, attn_masks, token_type_ids)[0]
-
-            #Computing loss
             loss = criterion(logits.squeeze(-1), labels.float())
-
-            #Backpropagating the gradients
             loss.backward()
-
-            #Optimization step
             opti.step()
 
             if it % 100 == 0:
